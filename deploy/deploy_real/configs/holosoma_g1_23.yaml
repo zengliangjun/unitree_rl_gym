@@ -1,0 +1,134 @@
+#
+control_dt: 0.02
+
+msg_type: "hg"     # "hg" or "go"
+imu_type: "pelvis"    # "torso" or "pelvis"
+
+lowcmd_topic: "rt/lowcmd"
+lowstate_topic: "rt/lowstate"
+
+policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/model_0050000.pt"
+
+mujoco_joints_names: [
+  "left_hip_pitch_joint",
+  "left_hip_roll_joint",
+  "left_hip_yaw_joint",
+  "left_knee_joint",
+  "left_ankle_pitch_joint",
+  "left_ankle_roll_joint",
+  "right_hip_pitch_joint",
+  "right_hip_roll_joint",
+  "right_hip_yaw_joint",
+  "right_knee_joint",
+  "right_ankle_pitch_joint",
+  "right_ankle_roll_joint",
+  "waist_yaw_joint",
+  #"waist_roll_joint",  13
+  #"waist_pitch_joint", 14
+  "left_shoulder_pitch_joint",
+  "left_shoulder_roll_joint",
+  "left_shoulder_yaw_joint",
+  "left_elbow_joint",
+  "left_wrist_roll_joint",
+  #"left_wrist_pitch_joint", 20
+  #"left_wrist_yaw_joint", 21
+  "right_shoulder_pitch_joint",
+  "right_shoulder_roll_joint",
+  "right_shoulder_yaw_joint",
+  "right_elbow_joint",
+  "right_wrist_roll_joint",
+  #"right_wrist_pitch_joint", 27
+  #"right_wrist_yaw_joint", 28
+]
+
+motor_joints_names: [
+  "left_hip_pitch_joint",
+  "left_hip_roll_joint",
+  "left_hip_yaw_joint",
+  "left_knee_joint",
+  "left_ankle_pitch_joint",
+  "left_ankle_roll_joint",
+  "right_hip_pitch_joint",
+  "right_hip_roll_joint",
+  "right_hip_yaw_joint",
+  "right_knee_joint",
+  "right_ankle_pitch_joint",
+  "right_ankle_roll_joint",
+  "waist_yaw_joint",
+  "",
+  "",
+  "left_shoulder_pitch_joint",
+  "left_shoulder_roll_joint",
+  "left_shoulder_yaw_joint",
+  "left_elbow_joint",
+  "left_wrist_roll_joint",
+  "",
+  "",
+  "right_shoulder_pitch_joint",
+  "right_shoulder_roll_joint",
+  "right_shoulder_yaw_joint",
+  "right_elbow_joint",
+  "right_wrist_roll_joint",
+]
+
+leg_joint2motor_idx: [0, 1, 2, 3, 4, 5,
+                      6, 7, 8, 9, 10, 11,
+                      12, #13, 14,
+                      15, 16, 17, 18, 19, # 20, 21,
+                      22, 23, 24, 25, 26, # 27, 28,
+                      ]
+
+kps: [40.179238471, 99.098427777, 40.179238471, 99.098427777, 28.501246196, 28.501246196,
+      40.179238471, 99.098427777, 40.179238471, 99.098427777, 28.501246196, 28.501246196,
+      40.179238471,
+      14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098,
+      14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098]
+
+
+kds: [2.557889765, 6.308801854, 2.557889765, 6.308801854, 1.814445687, 1.814445687,
+      2.557889765, 6.308801854, 2.557889765, 6.308801854, 1.814445687, 1.814445687,
+      2.557889765,
+      0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843,
+      0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843]
+default_angles: [-0.3120,  0.0000,  0.0000,  0.6690, -0.3630,  0.0000,
+                 -0.3120,  0.0000,  0.0000,  0.6690, -0.3630,  0.0000,
+                  0.0000,
+                  0.2000,  0.2000,  0.0000,  0.6000,  0.0000,
+                  0.2000, -0.2000,  0.0000,  0.6000,  0.0000]
+
+arm_waist_joint2motor_idx: [12, #13, 14,
+                            15, 16, 17, 18, 19, #20, 21,
+                            22, 23, 24, 25, 26, #27, 28
+                            ]
+
+arm_waist_kps: [40.179238471,
+      14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098,
+      14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098]
+
+arm_waist_kds: [2.557889765,
+      0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843,
+      0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843]
+
+arm_waist_target: [ 0.0000,
+                    0.2000,  0.2000,  0.0000,  0.6000,  0.0000,
+                    0.2000, -0.2000,  0.0000,  0.6000,  0.0000]
+
+
+action_scale: 0.25
+##
+obs_last_action_scale: 1.0
+obs_base_ang_vel_scale:  0.25
+obs_cmd_ang_scale: 1.0
+obs_cmd_lin_scale: 1.0
+obs_cos_phase_scale: 1.0
+obs_joint_pos_scale: 1.0
+obs_joint_vel_scale: 0.05
+obs_gravity_orientation_scale: 1.0
+obs_sin_phase_scale: 1.0
+
+
+max_cmd: [0.8, 0.5, 1.57]
+
+num_actions: 23
+num_obs: 82
+
