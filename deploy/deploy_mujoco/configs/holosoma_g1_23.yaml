@@ -1,0 +1,36 @@
+#
+policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/model_0050000.pt"
+xml_path: "{LEGGED_GYM_ROOT_DIR}/resources/robots/holosoma_g1_23/scenes/scene_g1_23dof_wbt_plane.xml"
+
+# Total simulation time
+simulation_duration: 60.0
+# Simulation time step
+simulation_dt: 0.005
+# Controller update frequency (meets the requirement of simulation_dt * controll_decimation=0.02; 50Hz)
+control_decimation: 4
+
+kps: [40.179238471, 99.098427777, 40.179238471, 99.098427777, 28.501246196, 28.501246196, 40.179238471, 99.098427777, 40.179238471, 99.098427777, 28.501246196, 28.501246196, 40.179238471, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098]
+
+kds: [2.557889765, 6.308801854, 2.557889765, 6.308801854, 1.814445687, 1.814445687, 2.557889765, 6.308801854, 2.557889765, 6.308801854, 1.814445687, 1.814445687, 2.557889765, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843]
+
+
+default_angles: [-0.3120,  0.0000,  0.0000,  0.6690, -0.3630,  0.0000, -0.3120,  0.0000,
+          0.0000,  0.6690, -0.3630,  0.0000,  0.0000,  0.2000,  0.2000,  0.0000,
+          0.6000,  0.0000,  0.2000, -0.2000,  0.0000,  0.6000,  0.0000]
+
+action_scale: 0.25
+
+obs_last_action_scale: 1.0
+obs_base_ang_vel_scale:  0.25
+obs_cmd_ang_scale: 1.0
+obs_cmd_lin_scale: 1.0
+obs_cos_phase_scale: 1.0
+obs_joint_pos_scale: 1.0
+obs_joint_vel_scale: 0.05
+obs_gravity_orientation_scale: 1.0
+obs_sin_phase_scale: 1.0
+
+num_actions: 23
+num_obs: 82
+
+cmd_init: [0.5, 0, 0]

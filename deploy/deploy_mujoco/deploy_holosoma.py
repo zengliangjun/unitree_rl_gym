@@ -12,35 +12,10 @@ from legged_gym import LEGGED_GYM_ROOT_DIR
 import torch
 import yaml
 
-
-def get_gravity_orientation(quaternion):
-    qw = quaternion[0]
-    qx = quaternion[1]
-    qy = quaternion[2]
-    qz = quaternion[3]
-
-    gravity_orientation = np.zeros(3)
-
-    gravity_orientation[0] = 2 * (-qz * qx + qw * qy)
-    gravity_orientation[1] = -2 * (qz * qy + qw * qx)
-    gravity_orientation[2] = 1 - 2 * (qw * qw + qz * qz)
-
-    return gravity_orientation
-
-
-def pd_control(target_q, q, kp, target_dq, dq, kd):
-    """Calculates torques from position commands"""
-    return (target_q - q) * kp + (target_dq - dq) * kd
-
+import deploy_mujoco
+import phas_gait
 
 if __name__ == "__main__":
-    # get config file name from command line
-    import argparse
-
-    #parser = argparse.ArgumentParser()
-    #parser.add_argument("--config_file", type=str, help="config file name in the config folder")
-    #args = parser.parse_args()
-
     config_file = "holosoma_g1_23.yaml"
     with open(f"{LEGGED_GYM_ROOT_DIR}/deploy/deploy_mujoco/configs/{config_file}", "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -56,11 +31,17 @@ if __name__ == "__main__":
 
         default_angles = np.array(config["default_angles"], dtype=np.float32)
 
-        ang_vel_scale = config["ang_vel_scale"]
-        dof_pos_scale = config["dof_pos_scale"]
-        dof_vel_scale = config["dof_vel_scale"]
         action_scale = config["action_scale"]
-        cmd_scale = np.array(config["cmd_scale"], dtype=np.float32)
+
+        obs_last_action_scale = config["obs_last_action_scale"]
+        obs_base_ang_vel_scale = config["obs_base_ang_vel_scale"]
+        obs_cmd_ang_scale = config["obs_cmd_ang_scale"]
+        obs_cmd_lin_scale = config["obs_cmd_lin_scale"]
+        obs_cos_phase_scale = config["obs_cos_phase_scale"]
+        obs_joint_pos_scale = config["obs_joint_pos_scale"]
+        obs_joint_vel_scale = config["obs_joint_vel_scale"]
+        obs_gravity_orientation_scale = config["obs_gravity_orientation_scale"]
+        obs_sin_phase_scale = config["obs_sin_phase_scale"]
 
         num_actions = config["num_actions"]
         num_obs = config["num_obs"]
@@ -73,7 +54,11 @@ if __name__ == "__main__":
     obs = np.zeros(num_obs, dtype=np.float32)
 
     counter = 0
+    step = 0
 
+    dt = simulation_dt * control_decimation
+    gait_state = phas_gait.LocomotionGait(dt)
+    gait_state.setup()
     # Load robot model
     m = mujoco.MjModel.from_xml_path(xml_path)
     d = mujoco.MjData(m)
@@ -86,13 +71,13 @@ if __name__ == "__main__":
 
     # load policy
     policy = torch.jit.load(policy_path)
-
+    gait_state.reset(None)
     with mujoco.viewer.launch_passive(m, d) as viewer:
         # Close the viewer automatically after simulation_duration wall-seconds.
         start = time.time()
         while viewer.is_running() and time.time() - start < simulation_duration:
             step_start = time.time()
-            tau = pd_control(target_dof_pos, d.qpos[7:], kps, np.zeros_like(kds), d.qvel[6:], kds)
+            tau = deploy_mujoco.pd_control(target_dof_pos, d.qpos[7:], kps, np.zeros_like(kds), d.qvel[6:], kds)
             d.ctrl[:] = tau
             # mj_step can be replaced with code that also evaluates
             # a policy and applies a control signal before stepping the physics.
@@ -100,7 +85,10 @@ if __name__ == "__main__":
 
             counter += 1
             if counter % control_decimation == 0:
-                # Apply control signal here.
+                step += 1
+                #
+                episode_length_buf = torch.tensor([step], dtype=torch.float32)
+                gait_state.step(cmd, episode_length_buf)
 
                 # create observation
                 qj = d.qpos[7:]
@@ -108,24 +96,35 @@ if __name__ == "__main__":
                 quat = d.qpos[3:7]
                 omega = d.qvel[3:6]
 
-                qj = (qj - default_angles) * dof_pos_scale
-                dqj = dqj * dof_vel_scale
-                gravity_orientation = get_gravity_orientation(quat)
-                omega = omega * ang_vel_scale
+                qj = (qj - default_angles)
+                dqj = dqj
+                gravity_orientation = deploy_mujoco.get_gravity_orientation(quat)
+                omega = omega
 
-                period = 0.8
-                count = counter * simulation_dt
-                phase = count % period / period
-                sin_phase = np.sin(2 * np.pi * phase)
-                cos_phase = np.cos(2 * np.pi * phase)
+                #
+                sin_phase = torch.sin(gait_state.phase).numpy()[0]
+                cos_phase = torch.cos(gait_state.phase).numpy()[0]
 
-                obs[:3] = omega
-                obs[3:6] = gravity_orientation
-                obs[6:9] = cmd * cmd_scale
-                obs[9 : 9 + num_actions] = qj
-                obs[9 + num_actions : 9 + 2 * num_actions] = dqj
-                obs[9 + 2 * num_actions : 9 + 3 * num_actions] = action
-                obs[9 + 3 * num_actions : 9 + 3 * num_actions + 2] = np.array([sin_phase, cos_phase])
+                # last_action
+                obs[:num_actions] = action * obs_last_action_scale
+                # base_ang_vel
+                obs[num_actions: num_actions + 3] = omega * obs_base_ang_vel_scale
+                # cmd_ang
+                obs[num_actions + 3: num_actions + 4] = cmd[2:] * obs_cmd_ang_scale
+                # cmd_lin
+                obs[num_actions + 4: num_actions + 6] = cmd[:2] * obs_cmd_lin_scale
+                # cos_phase
+                obs[num_actions + 6: num_actions + 8] = cos_phase * obs_cos_phase_scale
+                # joint_pos
+                obs[num_actions + 8: num_actions * 2 + 8] = qj * obs_joint_pos_scale
+                # joint_vel
+                obs[num_actions * 2 + 8: num_actions * 3 + 8] = dqj * obs_joint_vel_scale
+                # gravity_orientation
+                obs[num_actions * 3 + 8: num_actions * 3 + 11] = gravity_orientation * obs_gravity_orientation_scale
+                # sin_phase
+                obs[num_actions * 3 + 11: num_actions * 3 + 13] = sin_phase * obs_sin_phase_scale
+
+                ####
                 obs_tensor = torch.from_numpy(obs).unsqueeze(0)
                 # policy inference
                 action = policy(obs_tensor).detach().numpy().squeeze()
