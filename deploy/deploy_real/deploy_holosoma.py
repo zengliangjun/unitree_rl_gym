@@ -1,3 +1,10 @@
+import sys
+import os.path as osp
+root_dir = osp.abspath(osp.join(osp.dirname(__file__), "../.."))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+
 from legged_gym import LEGGED_GYM_ROOT_DIR
 from typing import Union
 import numpy as np
@@ -182,14 +189,16 @@ class Controller:
         gravity_orientation = get_gravity_orientation(quat)
         qj_obs = self.qj.copy()
         dqj_obs = self.dqj.copy()
-        qj_obs = (qj_obs - self.config.default_angles) * self.config.dof_pos_scale
-        dqj_obs = dqj_obs * self.config.dof_vel_scale
-        ang_vel = ang_vel * self.config.ang_vel_scale
+        qj_obs = (qj_obs - self.config.default_angles)# * self.config.dof_pos_scale
+        dqj_obs = dqj_obs # * self.config.dof_vel_scale
+        ang_vel = ang_vel # * self.config.ang_vel_scale
+        '''
         period = 0.8
         count = self.counter * self.config.control_dt
         phase = count % period / period
         sin_phase = np.sin(2 * np.pi * phase)
         cos_phase = np.cos(2 * np.pi * phase)
+        '''
 
         self.cmd[0] = self.remote_controller.ly
         self.cmd[1] = self.remote_controller.lx * -1
@@ -250,6 +259,7 @@ class Controller:
         time.sleep(self.config.control_dt)
 
 
+
 if __name__ == "__main__":
     #import argparse
 
@@ -257,8 +267,9 @@ if __name__ == "__main__":
     #parser.add_argument("net", type=str, help="network interface")
     #parser.add_argument("config", type=str, help="config file name in the configs folder", default="g1.yaml")
     #args = parser.parse_args()
-    config_net = ""
-    config_file = "holosoma_g1_23.yaml"
+    config_net = "enp3s0"
+    #config_file = "holosoma_g1_23.yaml"
+    config_file = "holosoma_g1_23_unitree_init.yaml"
     # Load config
     config_path = f"{LEGGED_GYM_ROOT_DIR}/deploy/deploy_real/configs/{config_file}"
     config = Config(config_path)

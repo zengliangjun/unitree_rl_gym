@@ -7,8 +7,11 @@ imu_type: "pelvis"    # "torso" or "pelvis"
 lowcmd_topic: "rt/lowcmd"
 lowstate_topic: "rt/lowstate"
 
-#policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251211_org/model_0050000.pt"
-policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251212_v1/model_0040000.pt"
+policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251217_untree_init_pos/model_0080000.pt"
+#policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251219_untree_init_pos_v2/model_0050000.pt"
+#policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251219_untree_init_pos_with59/model_0080000.pt"
+
+
 
 mujoco_joints_names: [
   "left_hip_pitch_joint",
@@ -91,11 +94,12 @@ kds: [2.557889765, 6.308801854, 2.557889765, 6.308801854, 1.814445687, 1.8144456
       2.557889765,
       0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843,
       0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843]
-default_angles: [-0.3120,  0.0000,  0.0000,  0.6690, -0.3630,  0.0000,
-                 -0.3120,  0.0000,  0.0000,  0.6690, -0.3630,  0.0000,
+
+default_angles: [-0.1000,  0.0000,  0.0000,  0.3000, -0.2000,  0.0000,
+                 -0.1000,  0.0000,  0.0000,  0.3000, -0.2000,  0.0000,
                   0.0000,
-                  0.2000,  0.2000,  0.0000,  0.6000,  0.0000,
-                  0.2000, -0.2000,  0.0000,  0.6000,  0.0000]
+                  0.3000,  0.2500,  0.0000, 0.9700,  0.1500,
+                  0.3000,-0.2500,  0.0000,  0.9700, -0.1500]
 
 arm_waist_joint2motor_idx: [12, #13, 14,
                             15, 16, 17, 18, 19, #20, 21,
