@@ -16,7 +16,8 @@ import deploy_mujoco
 import phas_gait
 
 if __name__ == "__main__":
-    config_file = "holosoma_g1_23.yaml"
+    #config_file = "holosoma_g1_23.yaml"
+    config_file = "holosoma_g1_23_unitree_init.yaml"
     with open(f"{LEGGED_GYM_ROOT_DIR}/deploy/deploy_mujoco/configs/{config_file}", "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
         policy_path = config["policy_path"].replace("{LEGGED_GYM_ROOT_DIR}", LEGGED_GYM_ROOT_DIR)
