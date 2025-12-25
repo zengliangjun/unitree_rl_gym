@@ -11,7 +11,7 @@ import numpy as np
 from legged_gym import LEGGED_GYM_ROOT_DIR
 import torch
 import yaml
-
+import copy
 
 def get_gravity_orientation(quaternion):
     qw = quaternion[0]
@@ -56,21 +56,29 @@ if __name__ == "__main__":
 
         default_angles = np.array(config["default_angles"], dtype=np.float32)
 
-        ang_vel_scale = config["ang_vel_scale"]
-        dof_pos_scale = config["dof_pos_scale"]
-        dof_vel_scale = config["dof_vel_scale"]
         action_scale = config["action_scale"]
-        cmd_scale = np.array(config["cmd_scale"], dtype=np.float32)
+
+        obs_base_ang_vel_scale = config["obs_base_ang_vel_scale"]
+        obs_gravity_orientation_scale = config["obs_gravity_orientation_scale"]
+        obs_cmd_scale = config["obs_cmd_scale"]
+        obs_joint_pos_scale = config["obs_joint_pos_scale"]
+        obs_joint_vel_scale = config["obs_joint_vel_scale"]
+        obs_last_action_scale = config["obs_last_action_scale"]
 
         num_actions = config["num_actions"]
         num_obs = config["num_obs"]
+        history_length = config["history_length"]
 
         cmd = np.array(config["cmd_init"], dtype=np.float32)
 
     # define context variables
     action = np.zeros(num_actions, dtype=np.float32)
     target_dof_pos = default_angles.copy()
+    history_obs = np.zeros(num_obs * history_length, dtype=np.float32)
     obs = np.zeros(num_obs, dtype=np.float32)
+
+    lab_qpos = np.zeros(num_actions, dtype=np.float32)
+    lab_qvel = np.zeros(num_actions, dtype=np.float32)
 
     counter = 0
 
@@ -79,10 +87,20 @@ if __name__ == "__main__":
     d = mujoco.MjData(m)
     m.opt.timestep = simulation_dt
 
+    mujoco2labids = []
+    mujoco_joint_names = []
     for joint_id in range(m.njnt):
         joint_name = mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_JOINT, joint_id)
-        print(f"{joint_id}: {joint_name}")
+        if joint_name not in config["lab_joint_names"]:
+            continue
 
+        print(f"mujoco  {joint_id}: {joint_name}")
+        mujoco_joint_names.append(joint_name)
+
+        labid = config["lab_joint_names"].index(joint_name)
+        mujoco2labids.append(labid)
+
+    print("mujoco2labids:", mujoco2labids)
 
     # load policy
     policy = torch.jit.load(policy_path)
@@ -92,8 +110,15 @@ if __name__ == "__main__":
         start = time.time()
         while viewer.is_running() and time.time() - start < simulation_duration:
             step_start = time.time()
-            tau = pd_control(target_dof_pos, d.qpos[7:], kps, np.zeros_like(kds), d.qvel[6:], kds)
-            d.ctrl[:] = tau
+            qpos = copy.deepcopy(d.qpos[7:])
+            qvel = copy.deepcopy(d.qvel[6:])
+
+            lab_qpos[mujoco2labids] = qpos
+            lab_qvel[mujoco2labids] = qvel
+
+            lab_tau = pd_control(target_dof_pos, lab_qpos, kps, np.zeros_like(kds), lab_qvel, kds)
+
+            d.ctrl[:] = lab_tau[mujoco2labids]
             # mj_step can be replaced with code that also evaluates
             # a policy and applies a control signal before stepping the physics.
             mujoco.mj_step(m, d)
@@ -108,25 +133,27 @@ if __name__ == "__main__":
                 quat = d.qpos[3:7]
                 omega = d.qvel[3:6]
 
-                qj = (qj - default_angles) * dof_pos_scale
-                dqj = dqj * dof_vel_scale
+                lab_qpos[mujoco2labids] = qj
+                lab_qvel[mujoco2labids] = dqj
                 gravity_orientation = get_gravity_orientation(quat)
-                omega = omega * ang_vel_scale
 
-                period = 0.8
-                count = counter * simulation_dt
-                phase = count % period / period
-                sin_phase = np.sin(2 * np.pi * phase)
-                cos_phase = np.cos(2 * np.pi * phase)
+                ## base_ang_vel
+                obs[:3] = omega * obs_base_ang_vel_scale
+                ## gravity_orientation_scale
+                obs[3:6] = gravity_orientation * obs_gravity_orientation_scale
+                ## cmd
+                obs[6:9] = cmd * obs_cmd_scale
+                ## joint_pos
+                obs[9:9 + num_actions] = lab_qpos * obs_joint_pos_scale
+                ## joint_vel
+                obs[9 + num_actions:9 + num_actions * 2] = lab_qvel * obs_joint_vel_scale
+                ## joint_vel
+                obs[9 + num_actions * 2:9 + num_actions * 3] = action * obs_last_action_scale
 
-                obs[:3] = omega
-                obs[3:6] = gravity_orientation
-                obs[6:9] = cmd * cmd_scale
-                obs[9 : 9 + num_actions] = qj
-                obs[9 + num_actions : 9 + 2 * num_actions] = dqj
-                obs[9 + 2 * num_actions : 9 + 3 * num_actions] = action
-                obs[9 + 3 * num_actions : 9 + 3 * num_actions + 2] = np.array([sin_phase, cos_phase])
-                obs_tensor = torch.from_numpy(obs).unsqueeze(0)
+                history_obs[: num_obs * (history_length -1)] = copy.deepcopy(history_obs[num_obs: ])
+                history_obs[num_obs * (history_length -1): ] = obs
+
+                obs_tensor = torch.from_numpy(history_obs).unsqueeze(0)
                 # policy inference
                 action = policy(obs_tensor).detach().numpy().squeeze()
                 # transform action to target_dof_pos

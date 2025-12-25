@@ -1,39 +1,95 @@
 #
 policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/unitree_rl_lab_g1_23/20251215_sim_5_use_layer_norm/policy.pt"
-xml_path: "{LEGGED_GYM_ROOT_DIR}/resources/robots/g1_description/scene_23dof.xml"
+xml_path: "{LEGGED_GYM_ROOT_DIR}/resources/robots/g1_description/g1_23dof_rev_1_0.xml"
 
 # Total simulation time
-simulation_duration: 60.0
+simulation_duration: 0.5 #60.0
 # Simulation time step
 simulation_dt: 0.005
 # Controller update frequency (meets the requirement of simulation_dt * controll_decimation=0.02; 50Hz)
 control_decimation: 4
 
-kps: [40.179238471, 99.098427777, 40.179238471, 99.098427777, 28.501246196, 28.501246196, 40.179238471, 99.098427777, 40.179238471, 99.098427777, 28.501246196, 28.501246196, 40.179238471, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098, 14.250623098]
+kps: [100., 100.,  #hip_pitch
+      200.,
+      100., 100.,  #hip_roll
+      40.,  40.,   #shoulder_pitch
+      100., 100.,  #hip_yaw
+      40.,  40.,   #shoulder_roll
+      150., 150.,  #knee
+      40., 40.,    #shoulder_yaw
+      40.,  40.,   #ankle_pitch
+      40.,  40.,   #elbow
+      40.,  40.,   #ankle_roll
+      40.,  40.]   #wrist_roll
 
-kds: [2.557889765, 6.308801854, 2.557889765, 6.308801854, 1.814445687, 1.814445687, 2.557889765, 6.308801854, 2.557889765, 6.308801854, 1.814445687, 1.814445687, 2.557889765, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843, 0.907222843]
+kds: [2.,  2.,   #hip_pitch
+      5.,
+      2.,  2.,   #hip_roll
+      10., 10.,
+      2.,  2.,   #hip_yaw
+      10., 10.,
+      4.,  4.,   #knee
+      10., 10.,
+      10., 10.,
+      10., 10.,
+      10., 10.,   #ankle_roll
+      10., 10.]   #wrist_roll
+
+default_angles: [-0.1,  -0.1,   #hip_pitch
+                 0.,
+                 0.,    0.,     #hip_roll
+                 0.3,   0.3,    #shoulder_pitch
+                 0.,    0.,     #hip_yaw
+                 0.25, -0.25,   #shoulder_roll
+                 0.3,   0.3,    #knee
+                 0.,    0.,     #shoulder_yaw
+                 -0.2,  -0.2,   #ankle_pitch
+                 0.97,  0.97,   #elbow
+                 0.,    0.,     #ankle_roll
+                 0.15, -0.15]   #wrist_roll
+
+effort_limit: [88.,  88.,
+               88.,
+               139., 139.,
+               25.,  25.,
+               88.,  88.,
+               25.,  25.,
+               139., 139.,
+               25.,  25.,
+               35.,  35.,
+               25.,  25.,
+               35.,  35.,
+               25.,  25.]
 
 
-default_angles: [-0.3120,  0.0000,  0.0000,  0.6690, -0.3630,  0.0000, -0.3120,  0.0000,
-          0.0000,  0.6690, -0.3630,  0.0000,  0.0000,  0.2000,  0.2000,  0.0000,
-          0.6000,  0.0000,  0.2000, -0.2000,  0.0000,  0.6000,  0.0000]
-
-
+lab_joint_names: [
+  'left_hip_pitch_joint', 'right_hip_pitch_joint',
+  'waist_yaw_joint',
+  'left_hip_roll_joint', 'right_hip_roll_joint',
+  'left_shoulder_pitch_joint', 'right_shoulder_pitch_joint',
+  'left_hip_yaw_joint', 'right_hip_yaw_joint',
+  'left_shoulder_roll_joint', 'right_shoulder_roll_joint',
+  'left_knee_joint', 'right_knee_joint',
+  'left_shoulder_yaw_joint', 'right_shoulder_yaw_joint',
+  'left_ankle_pitch_joint', 'right_ankle_pitch_joint',
+  'left_elbow_joint', 'right_elbow_joint',
+  'left_ankle_roll_joint', 'right_ankle_roll_joint',
+  'left_wrist_roll_joint', 'right_wrist_roll_joint'
+]
 
 
 action_scale: 0.25
 
-obs_last_action_scale: 1.0
-obs_base_ang_vel_scale:  0.25
-obs_cmd_ang_scale: 1.0
-obs_cmd_lin_scale: 1.0
-obs_cos_phase_scale: 1.0
+obs_base_ang_vel_scale:  0.2
+obs_gravity_orientation_scale: 1.0
+obs_cmd_scale: 1.0
 obs_joint_pos_scale: 1.0
 obs_joint_vel_scale: 0.05
-obs_gravity_orientation_scale: 1.0
-obs_sin_phase_scale: 1.0
+obs_last_action_scale: 1.0
+
 
 num_actions: 23
-num_obs: 82
+num_obs: 78
+history_length: 5
 
-cmd_init: [0.5, 0, 0]
+cmd_init: [0, 0, 0]
