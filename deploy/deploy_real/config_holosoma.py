@@ -34,6 +34,12 @@ class Config:
 
             self.action_scale = config["action_scale"]
 
+            if "obs_history_length" in config or \
+                hasattr(config, "obs_history_length"):
+                self.obs_history_length = config["obs_history_length"]
+            else:
+                self.obs_history_length = 1
+
             ##
             self.obs_last_action_scale = config["obs_last_action_scale"]
             self.obs_base_ang_vel_scale = config["obs_base_ang_vel_scale"]
@@ -50,3 +56,23 @@ class Config:
 
             self.num_actions = config["num_actions"]
             self.num_obs = config["num_obs"]
+
+
+            if "ang_vel_yaw_ranges" in config or \
+                hasattr(config, "ang_vel_yaw_ranges"):
+                self.ang_vel_yaw_ranges = config["ang_vel_yaw_ranges"]
+            else:
+                self.ang_vel_yaw_ranges = [-0.5, 0.5]
+
+            if "lin_vel_x_ranges" in config or \
+                hasattr(config, "lin_vel_x_ranges"):
+                self.lin_vel_x_ranges = config["lin_vel_x_ranges"]
+            else:
+                self.lin_vel_x_ranges = [-0.5, 1.0]
+
+            if "lin_vel_y_ranges" in config or \
+                hasattr(config, "lin_vel_y_ranges"):
+                self.lin_vel_y_ranges = config["lin_vel_y_ranges"]
+            else:
+                self.lin_vel_y_ranges = [-0.5, 0.5]
+

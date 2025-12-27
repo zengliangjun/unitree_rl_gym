@@ -1,5 +1,5 @@
 #
-policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251217_untree_init_pos/model_0080000.pt"
+policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251226_g123dof_fastsac_v2/model_0089000.pt"
 xml_path: "{LEGGED_GYM_ROOT_DIR}/resources/robots/holosoma_g1_23/scenes/scene_g1_23dof_wbt_plane.xml"
 
 # Total simulation time
@@ -21,6 +21,8 @@ default_angles: [-0.1000,  0.0000,  0.0000,  0.3000, -0.2000,  0.0000,
                   0.3000,-0.2500,  0.0000,  0.9700, -0.1500]
 
 action_scale: 0.25
+
+obs_history_length: 4
 
 obs_last_action_scale: 1.0
 obs_base_ang_vel_scale:  0.25
