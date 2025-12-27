@@ -1,5 +1,5 @@
 #
-policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251226_g123dof_fastsac_v2/model_0089000.pt"
+policy_path: "{LEGGED_GYM_ROOT_DIR}/deploy/pre_train/holosoma_g1_23/20251227_g123dof_fastsac_v2/model_0100000.pt"
 xml_path: "{LEGGED_GYM_ROOT_DIR}/resources/robots/holosoma_g1_23/scenes/scene_g1_23dof_wbt_plane.xml"
 
 # Total simulation time

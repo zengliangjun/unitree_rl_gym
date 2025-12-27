@@ -27,7 +27,8 @@ from common.remote_controller import RemoteController, KeyMap
 from config_holosoma import Config
 
 import phas_gait
-
+import copy
+import pickle
 
 class Controller:
     def __init__(self, config: Config) -> None:
@@ -95,6 +96,11 @@ class Controller:
             init_cmd_hg(self.low_cmd, self.mode_machine_, self.mode_pr_)
         elif config.msg_type == "go":
             init_cmd_go(self.low_cmd, weak_motor=self.config.weak_motor)
+
+        self.dump = {
+            "obs": [],
+            "actions": [],
+        }
 
     def LowStateHgHandler(self, msg: LowStateHG):
         self.low_state = msg
@@ -184,11 +190,11 @@ class Controller:
         if count < self.config.obs_history_length:
             out = np.zeros((self.config.obs_history_length * dim), dtype = np.float32)
 
-            sid = (self.config.obs_history_length - count) * dim
-            tmp = np.concatenate(obs, dim = 0)
+            sid = - count * dim
+            tmp = np.concatenate(obs, axis = 0)
             out[sid: ] = tmp
         else:
-            out = np.concatenate(obs, dim = 0)
+            out = np.concatenate(obs, axis = 0)
 
         if count >= self.config.obs_history_length:
             self.history_obs[name] = obs[1: ]
@@ -208,6 +214,8 @@ class Controller:
 
     def run(self):
         self.counter += 1
+
+
         ##
         episode_length_buf = torch.tensor([self.counter], dtype=torch.float32)
         self.gait_state.step(self.cmd, episode_length_buf)
@@ -234,7 +242,10 @@ class Controller:
         dqj_obs = self.dqj.copy()
         qj_obs = (qj_obs - self.config.default_angles)# * self.config.dof_pos_scale
         dqj_obs = dqj_obs # * self.config.dof_vel_scale
-        ang_vel = ang_vel # * self.config.ang_vel_scale
+        if len(ang_vel.shape) == 2:
+            ang_vel = ang_vel[0]
+        else:
+            ang_vel = ang_vel # * self.config.ang_vel_scale
         '''
         period = 0.8
         count = self.counter * self.config.control_dt
@@ -247,20 +258,19 @@ class Controller:
         self.cmd[1] = self.remote_controller.lx * -1
         self.cmd[2] = self.remote_controller.rx * -1
 
-        self.cmd[0] = min(self.cmd[0], self.lin_vel_x_ranges[1])
-        self.cmd[0] = max(self.cmd[0], self.lin_vel_x_ranges[0])
+        self.cmd[0] = min(self.cmd[0], self.config.lin_vel_x_ranges[1])
+        self.cmd[0] = max(self.cmd[0], self.config.lin_vel_x_ranges[0])
 
-        self.cmd[1] = min(self.cmd[1], self.lin_vel_y_ranges[1])
-        self.cmd[1] = max(self.cmd[1], self.lin_vel_y_ranges[0])
+        self.cmd[1] = min(self.cmd[1], self.config.lin_vel_y_ranges[1])
+        self.cmd[1] = max(self.cmd[1], self.config.lin_vel_y_ranges[0])
 
-        self.cmd[2] = min(self.cmd[2], self.ang_vel_yaw_ranges[1])
-        self.cmd[2] = max(self.cmd[2], self.ang_vel_yaw_ranges[0])
+        self.cmd[2] = min(self.cmd[2], self.config.ang_vel_yaw_ranges[1])
+        self.cmd[2] = max(self.cmd[2], self.config.ang_vel_yaw_ranges[0])
 
         num_actions = self.config.num_actions
 
         sin_phase = torch.sin(self.gait_state.phase).numpy()[0]
         cos_phase = torch.cos(self.gait_state.phase).numpy()[0]
-
         # last_action
         self.history_obs["last_action"].append(self.action * self.config.obs_last_action_scale)
         # base_ang_vel
@@ -282,8 +292,12 @@ class Controller:
 
         # Get the action from the policy network
         obs = self._pre_process_history_obs()
+        obs = np.array(obs, dtype=np.float32)
         obs_tensor = torch.from_numpy(obs).unsqueeze(0)
         self.action = self.policy(obs_tensor).detach().numpy().squeeze()
+
+        self.dump["obs"].append(copy.deepcopy(obs))
+        self.dump["actions"].append(copy.deepcopy(self.action))
 
         # transform action to target_dof_pos
         target_dof_pos = self.config.default_angles + self.action * self.config.action_scale
@@ -351,3 +365,6 @@ if __name__ == "__main__":
     create_damping_cmd(controller.low_cmd)
     controller.send_cmd(controller.low_cmd)
     print("Exit")
+
+    with open("dum_data.pkl", 'wb') as fd:
+        pickle.dump(controller.dump, fd)
